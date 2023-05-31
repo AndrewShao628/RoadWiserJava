@@ -10,6 +10,7 @@ import android.widget.Button;
 
 public class LoadScreenActivity extends AppCompatActivity {
     private Button homeButton;
+    private static final String TAG = "Sigwise";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,5 +33,6 @@ public class LoadScreenActivity extends AppCompatActivity {
     public void openHome() {
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
+        SigwiseLogger.i(TAG, "open home");
     }
 }

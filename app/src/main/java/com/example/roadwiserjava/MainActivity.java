@@ -11,10 +11,14 @@ import android.widget.Button;
 public class MainActivity extends AppCompatActivity {
     private Button settingsButton;
     private Button loadScreenButton;
+    private static final String TAG = "Sigwise";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        SigwiseLogger.i(TAG, "on create");
 
         //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
@@ -38,10 +42,12 @@ public class MainActivity extends AppCompatActivity {
     public void openSettings() {
         Intent intent = new Intent(this, SettingsActivity.class);
         startActivity(intent);
+        SigwiseLogger.i(TAG, "open settings");
     }
 
     public void openLoadScreen() {
         Intent intent = new Intent(this, LoadScreenActivity.class);
         startActivity(intent);
+        SigwiseLogger.i(TAG, "open load screen");
     }
 }
