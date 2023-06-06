@@ -15,7 +15,7 @@ public class SigwiseLogger {
 
     private static File logFile = new File(
             Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Sigwise"
-                    + File.separator + "roadwiser" + File.separator + "roadvoyager.log"
+                    + File.separator + "securitywiser" + File.separator + "roadvoyager.log"
     );
 
     private static final String TAG = SigwiseLogger.class.getName();
