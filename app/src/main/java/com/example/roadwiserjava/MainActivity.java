@@ -45,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton photoButton, recordButton;
     private static final String TAG = "Sigwise";
     private volatile int recstate = 0;
+    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
+    private String[] permissions = {Manifest.permission.RECORD_AUDIO};
 
 
     @Override
@@ -93,10 +95,31 @@ public class MainActivity extends AppCompatActivity {
         recordButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //Toast.makeText(MainActivity.this, "Hi", Toast.LENGTH_SHORT).show();
                 record();
             }
         });
 
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
+                    Manifest.permission.RECORD_AUDIO)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+
+                ActivityCompat.requestPermissions(MainActivity.this, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
+
+            }
+        }
     }
 
     private Executor getExecutor() {
@@ -145,14 +168,16 @@ public class MainActivity extends AppCompatActivity {
 
             if (videoCapture != null) {
                 File movieDir = new File("mnt/sdcard/Movies/CameraXMovies");    //might be incorrect
+                //File movieDir = new File(getExternalMediaDirs()[0]  + "/CameraXMovies");
                 if (!movieDir.exists()) {
                     movieDir.mkdir();
                 }
                 Date date = new Date();
                 String timestamp = String.valueOf(date.getTime());
-                String vidFilePath = movieDir.getAbsolutePath() + "/" + timestamp + ".jpg";
+                String vidFilePath = movieDir.getAbsolutePath() + "/" + timestamp + ".mp4";
 
                 File vidFile = new File(vidFilePath);
+
 
                 if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                     // TODO: Consider calling
@@ -162,6 +187,7 @@ public class MainActivity extends AppCompatActivity {
                     //                                          int[] grantResults)
                     // to handle the case where the user grants the permission. See the documentation
                     // for ActivityCompat#requestPermissions for more details.
+                    ActivityCompat.requestPermissions(MainActivity.this, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
                     return;
                 }
                 videoCapture.startRecording(
