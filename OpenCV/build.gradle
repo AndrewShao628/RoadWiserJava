@@ -101,8 +101,14 @@ def openCVersionCode = ((4 * 100 + 7) * 100 + 0) * 10 + 0
 println "OpenCV: " +openCVersionName + " " + project.buildscript.sourceFile
 
 android {
-    namespace 'com.example.roadwiserjava'
+    namespace 'org.opencv'
     compileSdkVersion 33
+    buildToolsVersion "30.0.3"
+
+    buildFeatures {
+        buildConfig true
+        aidl true
+    }
 
     defaultConfig {
         minSdkVersion 24
@@ -132,6 +138,7 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
+        //buildConfig true
     }
 
     sourceSets {

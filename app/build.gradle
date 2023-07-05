@@ -5,6 +5,12 @@ plugins {
 android {
     namespace 'com.example.roadwiserjava'
     compileSdk 33
+    buildToolsVersion "30.0.3"
+
+    buildFeatures {
+        buildConfig true
+        aidl true
+    }
 
     defaultConfig {
         applicationId "com.example.roadwiserjava"
