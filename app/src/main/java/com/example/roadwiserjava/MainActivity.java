@@ -111,10 +111,13 @@ public class MainActivity extends CameraActivity {
                     return prev_gray;
                 }
 
+                rgb = inputFrame.rgba();
+                curr_gray = inputFrame.gray();
+
                 //todo: detect noises
 
                 Core.absdiff(curr_gray, prev_gray, diff);
-                Imgproc.threshold(diff, diff, 40, 255, Imgproc.THRESH_BINARY);
+                Imgproc.threshold(diff, diff, 80, 255, Imgproc.THRESH_BINARY);
                 Imgproc.findContours(diff, cnts, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
                 Imgproc.drawContours(rgb, cnts, -1, new Scalar(255, 0, 0), 4);
@@ -127,8 +130,6 @@ public class MainActivity extends CameraActivity {
                 cnts.clear();
                 ////
 
-                rgb = inputFrame.rgba();
-                curr_gray = inputFrame.gray();
 
 
                 prev_gray = curr_gray.clone();
