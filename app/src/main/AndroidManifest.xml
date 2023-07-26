@@ -4,13 +4,10 @@
 
     <uses-feature android:name="android.hardware.camera.any" />
 
-
-
-    <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -22,6 +19,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.RoadWiserJava"
         tools:targetApi="33">
+        <activity
+            android:name=".ConfigActivity"
+            android:exported="false" />
         <activity
             android:name=".LoadScreenActivity"
             android:exported="false"

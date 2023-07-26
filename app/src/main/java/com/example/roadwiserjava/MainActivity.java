@@ -53,7 +53,10 @@ public class MainActivity extends CameraActivity {
     CameraBridgeViewBase cameraBridgeViewBase;
     Mat curr_gray, prev_gray, rgb, diff;
     List<MatOfPoint> cnts;
+    int numcnt;
+    final int cntThreshold = 10;
     boolean is_init;
+    int threshval = 80;
     private boolean recording = false;
     private PreviewView previewView;
     private VideoCapture videoCapture;
@@ -77,6 +80,8 @@ public class MainActivity extends CameraActivity {
         getPermission();
 
         is_init = false;
+
+        threshval = ConfigActivity.getThreshold();
 
         //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
@@ -115,9 +120,10 @@ public class MainActivity extends CameraActivity {
                 curr_gray = inputFrame.gray();
 
                 //todo: detect noises
+                numcnt = 0;
 
                 Core.absdiff(curr_gray, prev_gray, diff);
-                Imgproc.threshold(diff, diff, 80, 255, Imgproc.THRESH_BINARY);
+                Imgproc.threshold(diff, diff, threshVal, 255, Imgproc.THRESH_BINARY);
                 Imgproc.findContours(diff, cnts, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
                 Imgproc.drawContours(rgb, cnts, -1, new Scalar(255, 0, 0), 4);
@@ -125,6 +131,11 @@ public class MainActivity extends CameraActivity {
                 for(MatOfPoint m: cnts) {
                     Rect r = Imgproc.boundingRect(m);
                     Imgproc.rectangle(rgb, r, new Scalar(0,0,255), 3);
+                    numcnt++;
+                }
+
+                if(numcnt > cntThreshold) {
+                    //record
                 }
 
                 cnts.clear();
@@ -182,7 +193,7 @@ public class MainActivity extends CameraActivity {
 
 
     public void openSettings() {
-        Intent intent = new Intent(this, SettingsActivity.class);
+        Intent intent = new Intent(this, ConfigActivity.class);
         startActivity(intent);
         SigwiseLogger.i(TAG, "open settings");
     }
@@ -211,4 +222,5 @@ public class MainActivity extends CameraActivity {
             getPermission();
         }
     }
+
 }
