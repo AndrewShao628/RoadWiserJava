@@ -23,7 +23,7 @@
             android:name=".ConfigActivity"
             android:exported="false" />
         <activity
-            android:name=".LoadScreenActivity"
+            android:name=".LoadActivity"
             android:exported="false"
             android:screenOrientation="landscape" />
         <activity

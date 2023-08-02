@@ -45,7 +45,8 @@ public class ConfigActivity extends Activity {
     private int maxMemory = getAvailableExternalMemoryTime();
 
     Slider thresholdSlider;
-    TextView thresholdSliderVal;
+    @SuppressLint("StaticFieldLeak")
+    static TextView thresholdSliderVal;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +88,12 @@ public class ConfigActivity extends Activity {
 
         thresholdSlider = findViewById(R.id.thresholdSlider);
         thresholdSliderVal = findViewById(R.id.thresholdSliderVal);
+
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            thresholdSliderVal.setText(extras.getString("threshVal"));
+            //The key argument here must match that used in the other activity
+        }
 
         thresholdSlider.addOnChangeListener(new Slider.OnChangeListener() {
             @SuppressLint("RestrictedApi")
@@ -132,6 +139,7 @@ public class ConfigActivity extends Activity {
     private void goToMainActivity() {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        intent.putExtra("threshVal",getThreshold());
         intent.putExtra("resolution", resoState);
         EditText edittext_quota = (EditText)findViewById(editText);
         int storage = Integer.parseInt(edittext_quota.getText().toString());

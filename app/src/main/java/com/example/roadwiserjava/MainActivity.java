@@ -1,30 +1,18 @@
 package com.example.roadwiserjava;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.camera.core.CameraSelector;
-import androidx.camera.core.Preview;
 import androidx.camera.core.VideoCapture;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.LifecycleOwner;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.graphics.Camera;
-import android.media.MediaRecorder;
 import android.os.Bundle;
-import android.view.SurfaceHolder;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -38,13 +26,9 @@ import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 
 //select camera, start recording, every two minutes make clip detect motion
 
@@ -56,7 +40,7 @@ public class MainActivity extends CameraActivity {
     int numcnt;
     final int cntThreshold = 10;
     boolean is_init;
-    int threshval = 80;
+    int threshVal = 80;
     private boolean recording = false;
     private PreviewView previewView;
     private VideoCapture videoCapture;
@@ -81,9 +65,15 @@ public class MainActivity extends CameraActivity {
 
         is_init = false;
 
-        threshval = ConfigActivity.getThreshold();
+        //threshVal = ConfigActivity.getThreshold();
+        //threshVal = 80;
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            threshVal = Integer.parseInt(extras.getString("threshVal"));
+            //The key argument here must match that used in the other activity
+        }
 
-        //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         settingsButton = (ImageButton) findViewById(R.id.settingsButton);
         loadScreenButton = (ImageButton) findViewById(R.id.loadScreenButton);
@@ -194,12 +184,13 @@ public class MainActivity extends CameraActivity {
 
     public void openSettings() {
         Intent intent = new Intent(this, ConfigActivity.class);
+        intent.putExtra("threshVal",threshVal);
         startActivity(intent);
         SigwiseLogger.i(TAG, "open settings");
     }
 
     public void openLoadScreen() {
-        Intent intent = new Intent(this, LoadScreenActivity.class);
+        Intent intent = new Intent(this, LoadActivity.class);
         startActivity(intent);
         SigwiseLogger.i(TAG, "open load screen");
     }

@@ -1,9 +1,21 @@
 <resources>
     <string name="app_name">RoadWiserJava</string>
-    <string name="configfile">myconfig</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_load">LoadActivity</string>
     <string name="title_activity_play">PlayActivity</string>
     <string name="title_activity_splash">SplashActivity</string>
     <string name="title_activity_config">ConfigActivity</string>
+
+    <string name="google_maps_key" translatable="false" templateMergeStrategy="preserve">
+          AIzaSyAHQgYCAGovipePTfExWiZTmdIAo8lsVng
+    </string>
+
+    <string name="Mapbutton">Map</string>
+    <string name="savefolder">/Sigwise/roadwiser</string>
+    <string name="configfile">myconfig</string>
+    <!--new added -->
+
+    <string-array name="FilePopupMenu">
+        <item>Delete</item>
+    </string-array>
 </resources>
