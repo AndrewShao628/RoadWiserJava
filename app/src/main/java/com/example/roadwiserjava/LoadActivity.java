@@ -39,10 +39,10 @@ public class LoadActivity extends ListActivity {
 
         setContentView(R.layout.activity_load);
 
-        m_videoRootPath = Environment.getExternalStorageDirectory().getAbsolutePath() + getResources().getString(R.string.savefolder);
+        //m_videoRootPath = Environment.getExternalStorageDirectory().getAbsolutePath() + getResources().getString(R.string.savefolder);
 
-        populateList();
-        registerForContextMenu(this.getListView());
+        //populateList();
+        //registerForContextMenu(this.getListView());
 
         SigwiseLogger.i(TAG, "LoadActivity onCreate");
 
