@@ -43,10 +43,11 @@ public class ConfigActivity extends Activity {
     private float ratioMbperSec;
     private static final String TAG = "Sigwise";
     private int maxMemory = getAvailableExternalMemoryTime();
-
+    private int thresholdVal = 80;
+    private String email = "";
     Slider thresholdSlider;
     @SuppressLint("StaticFieldLeak")
-    static TextView thresholdSliderVal;
+    TextView thresholdSliderVal;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,8 +70,10 @@ public class ConfigActivity extends Activity {
         EditText myedittext = (EditText)findViewById(editText);
         myedittext.setText(""+getAvailableExternalMemoryTime()/200*100, TextView.BufferType.EDITABLE);
         EditText myedittext2 = (EditText)findViewById(editText2);
+        EditText myedittext3 = (EditText)findViewById(R.id.editText3);
         myedittext.setFilters(new InputFilter[]{new InputFilterMinMax(1,maxMemory)});
         myedittext2.setFilters(new InputFilter[]{new InputFilterMinMax(1,30)});
+
 
         SharedPreferences prefs = getSharedPreferences(getResources().getString(R.string.configfile), MODE_PRIVATE);
         int tmp = prefs.getInt("resolution", 0);
@@ -93,13 +96,15 @@ public class ConfigActivity extends Activity {
         if (extras != null) {
             thresholdSliderVal.setText(extras.getString("threshVal"));
             //The key argument here must match that used in the other activity
+            myedittext3.setText(extras.getString("email"), TextView.BufferType.EDITABLE);
         }
 
         thresholdSlider.addOnChangeListener(new Slider.OnChangeListener() {
             @SuppressLint("RestrictedApi")
             @Override
             public void onValueChange(@NonNull Slider slider, float value, boolean fromUser) {
-                thresholdSliderVal.setText(Float.toString(value));
+                thresholdVal = (int) value;
+                thresholdSliderVal.setText(Integer.toString(thresholdVal));
             }
         });
     }
@@ -139,23 +144,25 @@ public class ConfigActivity extends Activity {
     private void goToMainActivity() {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        intent.putExtra("threshVal",getThreshold());
-        intent.putExtra("resolution", resoState);
-        EditText edittext_quota = (EditText)findViewById(editText);
-        int storage = Integer.parseInt(edittext_quota.getText().toString());
-        quota = storage;
-        intent.putExtra("quota", quota);
-        EditText edittext_length = (EditText) findViewById(editText2);
-        int videocliplen = Integer.parseInt(edittext_length.getText().toString());
-        intent.putExtra("videocliplen",videocliplen);
+        //fix getThreshold
+        intent.putExtra("threshVal",thresholdVal);
+        intent.putExtra("email",email);
+        //intent.putExtra("resolution", resoState);
+        //EditText edittext_quota = (EditText)findViewById(editText);
+        //int storage = Integer.parseInt(edittext_quota.getText().toString());
+        //quota = storage;
+        //intent.putExtra("quota", quota);
+        //EditText edittext_length = (EditText) findViewById(editText2);
+        //int videocliplen = Integer.parseInt(edittext_length.getText().toString());
+        //intent.putExtra("videocliplen",videocliplen);
         startActivity(intent);
-        SharedPreferences.Editor editor = getSharedPreferences(getResources().getString(R.string.configfile), MODE_PRIVATE).edit();
-        editor.putInt("resolution", resoState);
-        editor.putInt("quota", quota);
-        editor.putInt("videocliplen", videocliplen);
-        SigwiseLogger.i(TAG,"resoState = "+resoState+" quota = "+quota+" videocliplen = "+videocliplen);
-        editor.commit();
-        this.finish();
+        //SharedPreferences.Editor editor = getSharedPreferences(getResources().getString(R.string.configfile), MODE_PRIVATE).edit();
+        //editor.putInt("resolution", resoState);
+        //editor.putInt("quota", quota);
+        //editor.putInt("videocliplen", videocliplen);
+        //SigwiseLogger.i(TAG,"resoState = "+resoState+" quota = "+quota+" videocliplen = "+videocliplen);
+        //editor.commit();
+        //this.finish();
     }
 
     private void goToConfigActivity() {
@@ -265,7 +272,4 @@ public class ConfigActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    public static int getThreshold() {
-        return Integer.parseInt((String) thresholdSliderVal.getText());
-    }
 }

@@ -13,8 +13,12 @@ import androidx.lifecycle.LifecycleOwner;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.media.CamcorderProfile;
+import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
@@ -34,25 +38,34 @@ import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+
+import javax.mail.Authenticator;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
 
 //select camera, start recording, every two minutes make clip detect motion
 
 public class MainActivity extends CameraActivity {
-    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     CameraBridgeViewBase cameraBridgeViewBase;
     Mat curr_gray, prev_gray, rgb, diff;
     List<MatOfPoint> cnts;
+    private MediaRecorder recorder;
     int numcnt;
     int cntThreshold = 10;
     int seconds = 120;
     boolean is_init;
     int threshVal = 80;
+    String email = "";
     private boolean recording = false;
     private boolean manual = false;
     private PreviewView previewView;
@@ -63,6 +76,9 @@ public class MainActivity extends CameraActivity {
 
     private static Handler mainThreadHandler;
     private static final String TAG = "Sigwise";
+    private static final String senderEmail = "shaojinghong@gmail.com";
+    private static final String senderPassword = "210395sc#as";
+    private String mailhost = "smtp.gmail.com";
     private volatile int recstate = 0;
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
     private String[] permissions = {Manifest.permission.RECORD_AUDIO};
@@ -85,10 +101,11 @@ public class MainActivity extends CameraActivity {
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             threshVal = Integer.parseInt(extras.getString("threshVal"));
+            email = extras.getString("email");
             //The key argument here must match that used in the other activity
         }
 
-            //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         settingsButton = (ImageButton) findViewById(R.id.settingsButton);
         loadScreenButton = (ImageButton) findViewById(R.id.loadScreenButton);
@@ -98,21 +115,11 @@ public class MainActivity extends CameraActivity {
 
         //previewView = (PreviewView) findViewById(R.id.previewView);
 
-        mainThreadHandler = new Handler(Looper.getMainLooper());
-
-        cameraProviderFuture = ProcessCameraProvider.getInstance(this);
-        cameraProviderFuture.addListener(() -> {
-            try {
-                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-                startCameraX(cameraProvider);
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }, getExecutor());
+        //mainThreadHandler = new Handler(Looper.getMainLooper());
 
         cameraBridgeViewBase = findViewById(R.id.cameraView);
+
+        recorder = new MediaRecorder();
 
 
         cameraBridgeViewBase.setCvCameraViewListener(new CameraBridgeViewBase.CvCameraViewListener2() {
@@ -227,6 +234,7 @@ public class MainActivity extends CameraActivity {
         Intent intent = new Intent(this, ConfigActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         intent.putExtra("threshVal",threshVal);
+        intent.putExtra("email",email);
         startActivity(intent);
         SigwiseLogger.i(TAG, "open settings");
     }
@@ -288,68 +296,66 @@ public class MainActivity extends CameraActivity {
     public void record() {
         if (!recording) {
             recordButton.setImageResource(R.drawable.stoprec2);
-
-            if (videoCapture != null) {
-                File movieDir = new File("mnt/sdcard/Movies/CameraXMovies");    //might be incorrect
-                //File movieDir = new File(getExternalMediaDirs()[0]  + "/CameraXMovies");
-                if (!movieDir.exists()) {
-                    movieDir.mkdir();
+            try {
+                File m_videoFolder = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + getResources().getString(R.string.savefolder));
+                if (!m_videoFolder.exists()) {
+                    m_videoFolder.mkdirs();
                 }
-                Date date = new Date();
-                String timestamp = String.valueOf(date.getTime());
-                String vidFilePath = movieDir.getAbsolutePath() + "/" + timestamp + ".mp4";
 
-                File vidFile = new File(vidFilePath);
+                recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+                recorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
 
+                CamcorderProfile cpHigh = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
+                recorder.setProfile(cpHigh);
+                //recorder.setOutputFile("out.mp4");
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+                String filename = m_videoFolder.getPath() + File.separator + sdf.format(new Date());
+                        //may need to switch below variables
+                recorder.setVideoSize(cameraBridgeViewBase.getWidth(), cameraBridgeViewBase.getHeight());
 
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    ActivityCompat.requestPermissions(MainActivity.this, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
-                    return;
-                }
-                videoCapture.startRecording(
-                        new VideoCapture.OutputFileOptions.Builder(vidFile).build(),
-                        getExecutor(),
-                        new VideoCapture.OnVideoSavedCallback() {
-                            @Override
-                            public void onVideoSaved(@NonNull VideoCapture.OutputFileResults outputFileResults) {
-                                Toast.makeText(MainActivity.this, "Video has been saved successfully.", Toast.LENGTH_SHORT).show();
-                            }
-
-                            @Override
-                            public void onError(int videoCaptureError, @NonNull String message, @Nullable Throwable cause) {
-                                Toast.makeText(MainActivity.this, "Error saving the video: " + message, Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                );
+                //recorder.setOnInfoListener(this);
+                //recorder.setOnErrorListener(this);
+                recorder.prepare();
+                cameraBridgeViewBase.setRecorder(recorder);
+                recorder.start();
             }
-
+            catch (IOException e) {
+                e.printStackTrace();
+            }
             recording = true;
         }
         else {
             recordButton.setImageResource(R.drawable.record4);
-            videoCapture.stopRecording();
             recording = false;
         }
     }
 
-    public void recordForTime(int mseconds){
-        Runnable delayedTask = new Runnable() {
-            @Override
-            public void run() {
-                if(recording && manual) {
-                    record();
+    public void sendEmail(File f, String date) {
+        String messageToSend = "Motion Detected at " + date;
+        Properties props = new Properties();
+        props.setProperty("mail.transport.protocol", "smtp");
+        props.setProperty("mail.host", mailhost);
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.port", "465");
+        props.put("mail.smtp.socketFactory.port", "465");
+        props.put("mail.smtp.socketFactory.class",
+                "javax.net.ssl.SSLSocketFactory");
+        props.put("mail.smtp.socketFactory.fallback", "false");
+        props.setProperty("mail.smtp.quitwait", "false");
 
-                    //send email
-                }
+        Session session = Session.getDefaultInstance(props, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                //return super.getPasswordAuthentication();
+                return new PasswordAuthentication(senderEmail, senderPassword);
             }
-        };
-        mainThreadHandler.postDelayed(delayedTask, mseconds*1000);
+        });
+
+        try{
+
+        }
+        catch(MessagingException e){
+            throw new RuntimeException(e);
+        }
     }
 }
