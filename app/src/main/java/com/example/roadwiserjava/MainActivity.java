@@ -48,10 +48,21 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.activation.FileDataSource;
 import javax.mail.Authenticator;
+import javax.mail.BodyPart;
+import javax.mail.Message;
 import javax.mail.MessagingException;
+import javax.mail.Multipart;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 
 //select camera, start recording, every two minutes make clip detect motion
 
@@ -330,7 +341,7 @@ public class MainActivity extends CameraActivity {
         }
     }
 
-    public void sendEmail(File f, String date) {
+    public void sendEmail(String filename, String date) {
         String messageToSend = "Motion Detected at " + date;
         Properties props = new Properties();
         props.setProperty("mail.transport.protocol", "smtp");
@@ -352,7 +363,22 @@ public class MainActivity extends CameraActivity {
         });
 
         try{
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(senderEmail));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(email));  //unsure
+            message.setSubject("Motion Detected At " + date);
+            message.setText("Motion was detected from your Android Phone");
+            //add attachment code
+            Multipart multipart = new MimeMultipart();
+            BodyPart messageBodyPart = new MimeBodyPart();
+            DataSource source = new FileDataSource(filename);
+            messageBodyPart.setDataHandler(new DataHandler(source));
+            messageBodyPart.setFileName(filename);
+            multipart.addBodyPart(messageBodyPart);
+            message.setContent(multipart);
 
+            Transport.send(message);
+            Toast.makeText(getApplicationContext(), "email sent successfully", Toast.LENGTH_LONG);
         }
         catch(MessagingException e){
             throw new RuntimeException(e);
