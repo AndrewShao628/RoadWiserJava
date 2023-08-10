@@ -78,12 +78,13 @@ public class MainActivity extends CameraActivity {
     int threshVal = 80;
     String email = "";
     private boolean recording = false;
-    private boolean manual = false;
+    //private boolean manual = false;
     private PreviewView previewView;
     private VideoCapture videoCapture;
     private ImageButton settingsButton;
     private ImageButton loadScreenButton;
     private ImageButton photoButton, recordButton;
+    private String currFile = "";
 
     private static Handler mainThreadHandler;
     private static final String TAG = "Sigwise";
@@ -126,7 +127,7 @@ public class MainActivity extends CameraActivity {
 
         //previewView = (PreviewView) findViewById(R.id.previewView);
 
-        //mainThreadHandler = new Handler(Looper.getMainLooper());
+        mainThreadHandler = new Handler(Looper.getMainLooper());
 
         cameraBridgeViewBase = findViewById(R.id.cameraView);
 
@@ -150,7 +151,7 @@ public class MainActivity extends CameraActivity {
 
             @Override
             public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-                if(!is_init) {
+                if (!is_init) {
                     prev_gray = inputFrame.gray();
                     is_init = true;
                     return prev_gray;
@@ -165,19 +166,22 @@ public class MainActivity extends CameraActivity {
                 Core.absdiff(curr_gray, prev_gray, diff);
                 Imgproc.threshold(diff, diff, threshVal, 255, Imgproc.THRESH_BINARY);
                 Imgproc.findContours(diff, cnts, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-
-                Imgproc.drawContours(rgb, cnts, -1, new Scalar(255, 0, 0), 4);
+                //Imgproc.drawContours(rgb, cnts, -1, new Scalar(255, 0, 0), 4);
 
                 for(MatOfPoint m: cnts) {
                     Rect r = Imgproc.boundingRect(m);
-                    Imgproc.rectangle(rgb, r, new Scalar(0,0,255), 3);
+                    if(recording) {
+                        Imgproc.rectangle(rgb, r, new Scalar(0, 0, 255), 3);
+                    }
                     numcnt++;
                 }
 
                 if(numcnt > cntThreshold) {
                     //record
-                    manual = false;
-                    //recordForTime(seconds);
+                    //manual = false;
+                    if(recording) {
+                        recordForTime(seconds);
+                    }
                 }
 
                 cnts.clear();
@@ -210,8 +214,8 @@ public class MainActivity extends CameraActivity {
             @Override
             public void onClick(View v) {
                 //Toast.makeText(MainActivity.this, "Hi", Toast.LENGTH_SHORT).show();
-                manual = true;
-                record();
+                //manual = true;
+                recordButtonPress();
             }
         });
 
@@ -242,6 +246,7 @@ public class MainActivity extends CameraActivity {
 
 
     public void openSettings() {
+        recorder.release();
         Intent intent = new Intent(this, ConfigActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         intent.putExtra("threshVal",threshVal);
@@ -251,6 +256,7 @@ public class MainActivity extends CameraActivity {
     }
 
     public void openLoadScreen() {
+        recorder.release();
         Intent intent = new Intent(this, LoadActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         startActivity(intent);
@@ -276,63 +282,10 @@ public class MainActivity extends CameraActivity {
         }
     }
 
-    private Executor getExecutor() {
-        return ContextCompat.getMainExecutor(this);
-    }
-
     @SuppressLint("RestrictedApi")
-    private void startCameraX(ProcessCameraProvider cameraProvider) {
-        cameraProvider.unbindAll(); //unbinds camera
-
-        //Camera Selector use case
-        CameraSelector cameraSelector = new CameraSelector.Builder()    //selects the default camera
-                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-                .build();
-
-        //Preview use case
-        //Preview preview = new Preview.Builder().build();
-
-        //preview.setSurfaceProvider(previewView.getSurfaceProvider());
-
-        //Image Capture use case
-
-        //Video Capture use case
-        videoCapture = new VideoCapture.Builder().setVideoFrameRate(30).build();
-
-        //removed preview
-        cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, videoCapture);
-    }
-
-    @SuppressLint("RestrictedApi")
-    public void record() {
+    public void recordButtonPress() {
         if (!recording) {
             recordButton.setImageResource(R.drawable.stoprec2);
-            try {
-                File m_videoFolder = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + getResources().getString(R.string.savefolder));
-                if (!m_videoFolder.exists()) {
-                    m_videoFolder.mkdirs();
-                }
-
-                recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-                recorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-
-                CamcorderProfile cpHigh = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
-                recorder.setProfile(cpHigh);
-                //recorder.setOutputFile("out.mp4");
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-                String filename = m_videoFolder.getPath() + File.separator + sdf.format(new Date());
-                        //may need to switch below variables
-                recorder.setVideoSize(cameraBridgeViewBase.getWidth(), cameraBridgeViewBase.getHeight());
-
-                //recorder.setOnInfoListener(this);
-                //recorder.setOnErrorListener(this);
-                recorder.prepare();
-                cameraBridgeViewBase.setRecorder(recorder);
-                recorder.start();
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
             recording = true;
         }
         else {
@@ -341,8 +294,36 @@ public class MainActivity extends CameraActivity {
         }
     }
 
+    public void record(String filename) {
+        try {
+
+            recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            recorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+
+            CamcorderProfile cpHigh = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
+            recorder.setProfile(cpHigh);
+            recorder.setOutputFile(filename);
+            //may need to switch below variables
+            recorder.setVideoSize(cameraBridgeViewBase.getWidth(), cameraBridgeViewBase.getHeight());
+
+            //recorder.setOnInfoListener(this);
+            //recorder.setOnErrorListener(this);
+            recorder.prepare();
+            cameraBridgeViewBase.setRecorder(recorder);
+            recorder.start();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void endRecord(String filename, String date) {
+        recorder.stop();
+        sendEmail(filename, date);
+        recorder.reset();
+    }
+
     public void sendEmail(String filename, String date) {
-        String messageToSend = "Motion Detected at " + date;
         Properties props = new Properties();
         props.setProperty("mail.transport.protocol", "smtp");
         props.setProperty("mail.host", mailhost);
@@ -366,7 +347,8 @@ public class MainActivity extends CameraActivity {
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(senderEmail));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(email));  //unsure
-            message.setSubject("Motion Detected At " + date);
+            String messageToSend = "Motion Detected at " + date;
+            message.setSubject(messageToSend);
             message.setText("Motion was detected from your Android Phone");
             //add attachment code
             Multipart multipart = new MimeMultipart();
@@ -383,5 +365,19 @@ public class MainActivity extends CameraActivity {
         catch(MessagingException e){
             throw new RuntimeException(e);
         }
+    }
+
+    public void recordForTime(int seconds){
+
+        File m_videoFolder = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + getResources().getString(R.string.savefolder));
+        if (!m_videoFolder.exists()) {
+            m_videoFolder.mkdirs();
+        }
+        @SuppressLint("SimpleDateFormat")
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+        String date = sdf.format(new Date());
+        String filename = m_videoFolder.getPath() + File.separator + date + ".mp4";
+        record(filename);
+
     }
 }

@@ -130,6 +130,7 @@
         android:layout_marginLeft="15dp"
         android:layout_alignRight="@+id/buttonConfig"
         android:layout_alignEnd="@+id/buttonConfig"
+        android:layout_below="@+id/textView6"
         android:editable="false"
         android:gravity="center_vertical" />
 
@@ -138,6 +139,7 @@
         android:layout_height="wrap_content"
         android:text="(new recordings will overwrite the oldest recordings)"
         android:id="@+id/textView6"
+        android:layout_marginTop="10dp"
         android:layout_below="@+id/editText"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
